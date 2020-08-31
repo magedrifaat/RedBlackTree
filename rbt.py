@@ -381,3 +381,39 @@ class RBT:
         violation = recur_helper(self.root)[1] 
         return not violation
 
+    def render(self):
+        def get_max_level(tree):
+            if tree is None:
+                return 0
+            else:
+                return 1 + max(get_max_level(tree.get_left()), get_max_level(tree.get_right()))
+        
+        def make_line(tree, level):
+            if level == 0:
+                return ''
+
+            if tree:
+                val = "{0:06d}".format(tree.get_value())
+                if tree.get_color() == RBT.RED:
+                    val = '\033[91m' + val + '\033[0m'
+            else:
+                val = 6 * " "
+            spaces = (2**level) * 2 - 3
+            line = spaces * " " + val + spaces * " "
+            if level == 1:
+                return line
+            else:
+                left = tree.get_left() if tree else None
+                right = tree.get_right() if tree else None
+                left_lines = make_line(left, level - 1).split('\n')
+                right_lines = make_line(right, level - 1).split('\n')
+                sub = "\n".join([l[:-1] + '||' + r[1:] for l,r in zip(left_lines, right_lines)])
+                return line + "\n" + sub
+
+        max_level = get_max_level(self.root)
+        if max_level <= 5:
+            print(make_line(self.root, max_level))
+        else:
+            print("Tree is too deep to be rendered!")
+        
+

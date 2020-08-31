@@ -31,7 +31,7 @@ def main():
             else:
                 print("The number wasn't found :(")
         elif c.startswith('v'):
-            pass
+            tree.render()
         elif c.startswith('t'):
             pass
         elif c.startswith('x'):
