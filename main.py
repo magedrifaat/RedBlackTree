@@ -1,38 +1,55 @@
-from rbt import RBT, RBTNode
-import random
-import traceback
+from rbt import RBT
+import sys
+
+PROMPT = '''
+Enter i to insert a number
+      d to delete a number
+      s to search for a number
+      v to view the tree
+      t to enter iteration mode
+      x to exit
+Command: '''
 
 def main():
     tree = RBT()
-    count = 0
-    history = []
-    numbers = [random.randint(0, 1000000) for i in range(500)]
-    print("started")
-    for number in numbers:
-        try:
-            history.append(f"tree.insert({number})")
-            tree.insert(number)
-            count += 1
-        except Exception as e:
-            traceback.print_exc()
-            print("\n".join(history))
-            print(count)
-            break
+    while True:
+        c = input(PROMPT)
+        c = c.lower()
+        if c.startswith('i'):
+            if tree.insert(get_a_number()):
+                print("The number was inserted in the tree.")
+            else:
+                print("The number is already in the tree.")
+        elif c.startswith('d'):
+            if tree.delete(get_a_number()):
+                print("The number was deleted from the tree.")
+            else:
+                print("This number is not in the tree.")
+        elif c.startswith('s'):
+            if tree.search(get_a_number()):
+                print("The number was found in the tree!")
+            else:
+                print("The number wasn't found :(")
+        elif c.startswith('v'):
+            pass
+        elif c.startswith('t'):
+            pass
+        elif c.startswith('x'):
+            print("Goodbye!")
+            sys.exit(0)
+        else:
+            print("Wrong Input!")
+        input("Press Enter to continue...")
 
-    print("deleting")
-    numbers = list(set(numbers))
-    for i in range(len(numbers)):
+def get_a_number():
+    while True:
         try:
-            deleted = random.choice(numbers)
-            history.append(f"tree.delete({deleted})")
-            numbers.remove(deleted)
-            tree.delete(deleted)
+            num = int(input("Enter the number: "))
         except:
-            traceback.print_exc()
-            print("\n".join(history))
-            break
-    assert tree.root is None
-
+            print("Wrong input, you should enter a number!")
+            continue
+        break
+    return num
 
 if __name__ == "__main__":
     main()

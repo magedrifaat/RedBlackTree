@@ -68,7 +68,7 @@ class RBT:
     def insert(self, value):
         # Prevent duplicates
         if self.search(value):
-            return
+            return False
 
         # Create the new node and insert it
         new_node = RBTNode(value, RBT.RED)
@@ -81,6 +81,7 @@ class RBT:
             if parent.get_color() == RBT.RED:
                 self.fix_redred(new_node)
         self.check_invariants()
+        return True
 
     def get_future_parent(self, new_node):
         current_node = self.root
@@ -168,6 +169,8 @@ class RBT:
 
     def delete(self, value):
         node = self.find(value)
+        if node is None:
+            return False
         parent = self.get_parent(node)
         
         # If the node has two children swap it with the inorder successor
@@ -183,7 +186,7 @@ class RBT:
         if node == self.root:
             # Set the new root and return
             self.root = node.get_left() if node.get_left() else node.get_right()
-            return
+            return True
 
         if node.get_color() == RBT.RED:
             # If the node is red simply remove it from the tree (it can't have a single child)
@@ -213,6 +216,7 @@ class RBT:
                 self.fix_black_height(parent, sibling)
         
         self.check_invariants()
+        return True
     
     def fix_black_height(self, parent, sibling):
         assert sibling is not None
