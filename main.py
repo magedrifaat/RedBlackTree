@@ -10,6 +10,13 @@ Enter i to insert a number
       x to exit
 Command: '''
 
+ITER_PROMPT = '''
+Enter l to go left
+      r to right
+      p to go back to the parent
+      x to exit iteration mode
+Input: '''
+
 def main():
     tree = RBT()
     while True:
@@ -33,7 +40,11 @@ def main():
         elif c.startswith('v'):
             tree.render()
         elif c.startswith('t'):
-            pass
+            if tree.root:
+                print("You have entered the iteration mode!")
+                iteration_mode(tree.root, tree)
+            else:
+                print("The tree is empty, add some values to iterate on.")
         elif c.startswith('x'):
             print("Goodbye!")
             sys.exit(0)
@@ -50,6 +61,38 @@ def get_a_number():
             continue
         break
     return num
+
+def iteration_mode(current, tree):
+    parent = tree.get_parent(current)
+    print("Current node:")
+    print(f"\tvalue = {current.get_value()}")
+    print(f"\tleft child  = {current.get_left().get_value() if current.get_left() else 'null'}")
+    print(f"\tright child  = {current.get_right().get_value() if current.get_right() else 'null'}")
+    print(f"\tparnet  = {parent.get_value() if parent else 'null'}")
+    c = input(ITER_PROMPT).lower()
+    if c.startswith('l'):
+        if current.get_left():
+            iteration_mode(current.get_left(), tree)
+        else:
+            print("Can't go there, the node is null!")
+            iteration_mode(current, tree)
+    elif c.startswith('r'):
+        if current.get_right():
+            iteration_mode(current.get_right(), tree)
+        else:
+            print("Can't go there, the node is null!")
+            iteration_mode(current, tree)
+    elif c.startswith('p'):
+        if parent:
+            iteration_mode(parent, tree)
+        else:
+            print("Can't go there, the node is null!")
+            iteration_mode(current, tree)
+    elif c.startswith('x'):
+        return
+    else:
+        print("Wrong Input!")
+        iteration_mode(current, tree)
 
 if __name__ == "__main__":
     main()

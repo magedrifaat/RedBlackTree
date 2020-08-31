@@ -3,11 +3,12 @@ import random
 import traceback
 
 def test():
+    # Tests must be run with assertions enabled to catch errors
     tree = RBT()
     count = 0
     history = []
     numbers = [random.randint(0, 1000000) for i in range(500)]
-    print("started")
+    print("inserting")
     for number in numbers:
         try:
             history.append(f"tree.insert({number})")
