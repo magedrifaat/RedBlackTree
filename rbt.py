@@ -64,24 +64,6 @@ class RBT:
 
     def search(self, value):
         return self.find(value) is not None
-    
-    def insert(self, value):
-        # Prevent duplicates
-        if self.search(value):
-            return False
-
-        # Create the new node and insert it
-        new_node = RBTNode(value, RBT.RED)
-        if self.root is None:
-            self.root = new_node
-            self.root.set_color(RBT.BLACK)
-        else:
-            parent = self.get_future_parent(new_node)
-            parent.insert_child(new_node)
-            if parent.get_color() == RBT.RED:
-                self.fix_redred(new_node)
-        self.check_invariants()
-        return True
 
     def get_future_parent(self, new_node):
         current_node = self.root
@@ -107,6 +89,46 @@ class RBT:
             else:
                 current_node = current_node.get_right()
         return None
+
+    '''
+        Does a left rotation on parent,
+        the caller should handle the relations to the grandparent
+    '''
+    def rotate_left(self, parent, right_child):
+        parent.set_right(right_child.get_left())
+        right_child.set_left(parent)
+
+    '''
+        Does a right rotation on parent,
+        the caller should handle the relations to the grandparent
+    '''
+    def rotate_right(self, parent, left_child):
+        parent.set_left(left_child.get_right())
+        left_child.set_right(parent)
+
+    def replace_child(self, parent, old_child, new_child):
+        if old_child == parent.get_left():
+            parent.set_left(new_child)
+        else:
+            parent.set_right(new_child)
+    
+    def insert(self, value):
+        # Prevent duplicates
+        if self.search(value):
+            return False
+
+        # Create the new node and insert it
+        new_node = RBTNode(value, RBT.RED)
+        if self.root is None:
+            self.root = new_node
+            self.root.set_color(RBT.BLACK)
+        else:
+            parent = self.get_future_parent(new_node)
+            parent.insert_child(new_node)
+            if parent.get_color() == RBT.RED:
+                self.fix_redred(new_node)
+        self.check_invariants()
+        return True
     
     def fix_redred(self, new_node):
         parent = self.get_parent(new_node)
@@ -131,37 +153,27 @@ class RBT:
         if parent == gparent.get_right() and child == parent.get_left():
             # Right rotation
             gparent.set_right(child)
-            parent.set_left(child.get_right())
-            child.set_right(parent)
+            self.rotate_right(parent, child)
             child, parent = parent, child
         elif parent == gparent.get_left() and child == parent.get_right():
             # Left rotation
             gparent.set_left(child)
-            parent.set_right(child.get_left())
-            child.set_left(parent)
+            self.rotate_left(parent, child)
             child, parent = parent, child
         
         # Second, promote parent and recolor
         if parent == gparent.get_left():
-            gparent.set_left(parent.get_right())
-            parent.set_right(gparent)
+            self.rotate_right(gparent, parent)
             if self.get_parent(gparent):
-                if gparent == self.get_parent(gparent).get_left():
-                    self.get_parent(gparent).set_left(parent)
-                else:
-                    self.get_parent(gparent).set_right(parent)
+                self.replace_child(self.get_parent(gparent), gparent, parent)
             else:
                 self.root = parent
             parent.set_color(RBT.BLACK)
             gparent.set_color(RBT.RED)
         else:
-            gparent.set_right(parent.get_left())
-            parent.set_left(gparent)
+            self.rotate_left(gparent, parent)
             if self.get_parent(gparent):
-                if gparent == self.get_parent(gparent).get_left():
-                    self.get_parent(gparent).set_left(parent)
-                else:
-                    self.get_parent(gparent).set_right(parent)
+                self.replace_child(self.get_parent(gparent), gparent, parent)
             else:
                 self.root = parent
             parent.set_color(RBT.BLACK)
@@ -191,19 +203,13 @@ class RBT:
         if node.get_color() == RBT.RED:
             # If the node is red simply remove it from the tree (it can't have a single child)
             assert node.get_left() is None and node.get_right() is None
-            if node == parent.get_left():
-                parent.set_left(None)
-            else:
-                parent.set_right(None)
+            self.replace_child(parent, node, None)
         else:
             child = node.get_left() if node.get_left() else node.get_right()
             if child is not None and child.get_color() == RBT.RED:
                 # If the node has a red child we can swap and recolor
                 child.set_color(RBT.BLACK)
-                if node == parent.get_left():
-                    parent.set_left(child)
-                else:
-                    parent.set_right(child)
+                self.replace_child(parent, node, child)
             else:
                 # The node is a leaf, remove it and fix the violation of black height
                 assert child is None
@@ -226,17 +232,13 @@ class RBT:
             gparent = self.get_parent(parent)
             if sibling == parent.get_left():
                 new_sibling = sibling.get_right()
-                parent.set_left(sibling.get_right())
-                sibling.set_right(parent)
+                self.rotate_right(parent, sibling)
             else:
                 new_sibling = sibling.get_left()
-                parent.set_right(sibling.get_left())
-                sibling.set_left(parent)
+                self.rotate_left(parent, sibling)
+            
             if gparent:
-                if parent == gparent.get_left():
-                    gparent.set_left(sibling)
-                else:
-                    gparent.set_right(sibling)
+                self.replace_child(gparent, parent, sibling)
             else:
                 self.root = sibling
 
@@ -268,8 +270,7 @@ class RBT:
                     
                     sibling.set_color(RBT.RED)
                     sl.set_color(RBT.BLACK)
-                    sibling.set_left(sl.get_right())
-                    sl.set_right(sibling)
+                    self.rotate_right(sibling, sl)
                     parent.set_right(sl)
                     sibling = sl
                 elif sibling == parent.get_left() and \
@@ -277,8 +278,7 @@ class RBT:
 
                     sibling.set_color(RBT.RED)
                     sr.set_color(RBT.BLACK)
-                    sibling.set_right(sr.get_left())
-                    sr.set_left(sibling)
+                    self.rotate_left(sibling, sr)
                     parent.set_left(sr)
                     sibling = sr
             else:
@@ -292,18 +292,13 @@ class RBT:
             if sibling == parent.get_right():
                 assert sibling.get_right().get_color() == RBT.RED
                 sibling.get_right().set_color(RBT.BLACK)
-                parent.set_right(sibling.get_left())
-                sibling.set_left(parent)
+                self.rotate_left(parent, sibling)
             else:
                 assert sibling.get_left().get_color() == RBT.RED
                 sibling.get_left().set_color(RBT.BLACK)
-                parent.set_left(sibling.get_right())
-                sibling.set_right(parent)
+                self.rotate_right(parent, sibling)
             if gparent:
-                if parent == gparent.get_left():
-                    gparent.set_left(sibling)
-                else:
-                    gparent.set_right(sibling)
+                self.replace_child(gparent, parent, sibling)
             else:
                 self.root = sibling
 
